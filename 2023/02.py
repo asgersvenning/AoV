@@ -29,27 +29,6 @@ class Show:
             count, color = cube.split(" ")
             self.counts[color] = int(count)
 
-    @property
-    def red(self, value):
-        self.counts["red"] = value
-    @property
-    def green(self, value):
-        self.counts["green"] = value
-    @property
-    def blue(self, value):
-        self.counts["blue"] = value
-
-    @red.getter
-    def red(self):
-        return self.counts["red"]
-    @green.getter
-    def green(self):
-        return self.counts["green"]
-    @blue.getter
-    def blue(self):
-        return self.counts["blue"]
-    
-
 path = "inputs/02.input"
 max_possible = {
     "red" : 12,
