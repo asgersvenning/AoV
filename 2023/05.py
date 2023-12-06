@@ -53,7 +53,7 @@ with open(path, "r") as f:
         for m in maps:
             intermediary = m[intermediary]
         locations.append(intermediary)
-    print(min(locations))
+    print(len(locations), min(locations))
 
     # Part 2 - Skip linear ranges
     for map in maps:
@@ -70,4 +70,4 @@ with open(path, "r") as f:
             seed += length_of_step(remainders) + 1
     
             locations.append(intermediary)
-    print(min(locations))
+    print(len(locations), min(locations))
