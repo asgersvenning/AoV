@@ -27,17 +27,28 @@ class Race:
 def is_decimal(num):
     return num != (num // 1)
 
+def ways(roots):
+    if roots is None or (len(roots) == 1 and is_decimal(roots)) or (len(roots) == 2 and abs(roots[0] - roots[1]) < 1):
+        return 0
+    if len(roots) == 2:
+        assert roots[0] < roots[1], ValueError(f'Roots come in wrong order: {roots}')
+        w = floor(roots[1]) - ceil(roots[0]) + 1
+        if not is_decimal(roots[0]) and not is_decimal(roots[1]):
+            w -= 2
+        return w
+    else:
+         return 1
+
 from math import ceil, floor
 import re
 
-path = "inputs/06.test"
+path = "inputs/06.input"
 
 with open(path, "r") as f:
+    # Part 1
     time, distance = f.readlines()
     time = re.sub(r"\s+", " ", time.removeprefix("Time:").strip()).split(" ")
     distance = re.sub(r"\s+", " ", distance.removeprefix("Distance:").strip().replace("  ", " ")).split(" ")
-    print(time)
-    print(distance)
     time = [int(part) for part in time]
     distance = [int(part) for part in distance]
 
@@ -46,12 +57,14 @@ with open(path, "r") as f:
     total_ways = 1
     for race in races:
         roots = race.roots()
-        if roots is None or (len(roots) == 1 and is_decimal(roots)) or (len(roots) == 2 and abs(roots[0] - roots[1]) < 1):
-            total_ways = 0
-            break
-        if len(roots) == 2:
-            assert roots[0] < roots[1], ValueError(f'Roots come in wrong order: {roots}')
-            print(roots)
-            total_ways *= floor(roots[1]) - ceil(roots[0])
-
+        this_ways = ways(roots)
+        total_ways *= this_ways
     print(total_ways)
+
+    # Part 2
+    time = int("".join([str(part) for part in time]))
+    distance = int("".join([str(part) for part in distance]))
+
+    race = Race(time, distance)
+    roots = race.roots()
+    print(ways(roots))
