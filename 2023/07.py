@@ -2,7 +2,7 @@ STRENGTH = {label : i for i, label in enumerate(reversed("A, K, Q, J, T, 9, 8, 7
 TYPES = list(reversed(["FIVE", "FOUR", "HOUSE", "THREE", "TWO", "ONE", "HIGHEST"]))
 
 class Type:
-    def __init__(self, cards, jokers : bool):
+    def __init__(self, cards : list[str], jokers : bool):
         self.counts = [0] * len(STRENGTH)
         for card in cards:
             if jokers and card == "J":
@@ -30,18 +30,17 @@ class Type:
         else:
             self.strength = 0
 
-    def __gt__(self, other : "Type"):
+    def __gt__(self, other : "Type") -> bool:
         return self.strength > other.strength
-    
-    def __lt__(self, other : "Type"):
+
+    def __lt__(self, other : "Type") -> bool:
         return self.strength < other.strength
-    
-    def __str__(self):
+
+    def __str__(self) -> str:
         return TYPES[self.strength]
 
-
 class Hand:
-    def __init__(self, s, jokers : bool = False):
+    def __init__(self, s : str, jokers : bool = False):
         self.hand, self.bid = s.strip().split(" ")
         self.cards = list(self.hand)
         self.bid = int(self.bid)
@@ -49,16 +48,15 @@ class Hand:
         self._jokers = jokers
 
     @property
-    def jokers(self):
+    def jokers(self) -> bool:
         return self._jokers
 
     @jokers.setter
-    def jokers(self, value):
+    def jokers(self, value : bool) -> None:
         if not isinstance(value, bool):
             raise TypeError(f"'jokers' attribute must be a boolean, found {type(value)}")
         self.type = Type(self.cards, value)
         self._jokers = value
-
 
     def compare(self, other : "Hand"):
         if self.type > other.type:
@@ -85,10 +83,10 @@ class Hand:
         else:
             return -1
         
-    def __str__(self):
+    def __str__(self) -> str:
         return f'Cards: {" ".join(self.hand)} | Bid = {self.bid:>5}'
         
-def sort_hands(hand_list : list["Hand"]):
+def sort_hands(hand_list : list["Hand"]) -> list["Hand"]:
     if not isinstance(hand_list, list):
         raise TypeError(f"Expected type list but 'hands' is {type(hand_list)}")
     if len(hand_list) == 0:
@@ -118,34 +116,24 @@ def sort_hands(hand_list : list["Hand"]):
             if not left or not right:
                 break
         return new_list + left + right
+    
+def winnings(hand_list : list["Hand"]) -> int:
+    sorted_hands = sort_hands(hand_list)
+    winnings = 0
+    for rank, hand in enumerate(reversed(sorted_hands)):
+        winnings += (rank + 1) * hand.bid
+    return winnings
 
 path = "inputs/07.input"
 
 with open(path, "r") as file:
     # Part 1
     hands = [Hand(line) for line in file.readlines()]
-
-    sorted_hands = sort_hands(hands)
-    winnings = 0
-    for rank, hand in enumerate(reversed(sorted_hands)):
-        winnings += (rank + 1) * hand.bid
-    print("Part 1:", winnings)
+    print("Part 1:", winnings(hands))
 
     # Part 2 - Jokers
     for i in range(len(hands)):
         hands[i].jokers = True
 
     sorted_hands = sort_hands(hands)
-    winnings = 0
-    for rank, hand in enumerate(reversed(sorted_hands)):
-        winnings += (rank + 1) * hand.bid
-    print("Part 2:", winnings)
-
-    
-
-
-        
-        
-        
-
-
+    print("Part 2:", winnings(hands))
