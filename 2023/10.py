@@ -13,10 +13,10 @@ SYMBOL_TO_DIRECTION = {
     "S" : ["START"]
 }
 DIRECTION_TO_OFFSET = {
-    "UP" : [1, -1],
     "RIGHT" : [0, 1],
-    "DOWN" : [1, 1],
-    "LEFT" : [0, -1]
+    "UP" : [1, -1],
+    "LEFT" : [0, -1],
+    "DOWN" : [1, 1]
 }
 REFLECT = {
     "UP" : "DOWN",
@@ -35,18 +35,9 @@ class Pipe:
         else:
             self.start = False
         self.position = position
-
-    @property
-    def x(self) -> int:
-        return self.position[0]
-    
-    @property
-    def y(self) -> int:
-        return self.position[1]
     
     def go(self, direction : str) -> list[int, int]:
-        new_position = list(self.position)
-        offset = DIRECTION_TO_OFFSET[direction]
+        new_position, offset = list(self.position), DIRECTION_TO_OFFSET[direction]
         new_position[offset[0]] += offset[1]
         return new_position
     
@@ -80,7 +71,7 @@ class Pipe:
             neighbor = tboard[[xi, yi]]
             _, ncon = neighbor.connections()
             for xj, yj in ncon:
-                if xj == self.x and yj == self.y:
+                if xj == self.position[0] and yj == self.position[1]:
                     cons.append(di)
         return cons
 
@@ -98,54 +89,36 @@ class Chain:
         return self.pipes[index]
     
     def __iter__(self) -> "Chain":
-        print("Start running on chain")
         mtul = [sum(i.position) for i in self.pipes]
         upper_left = [i for i, (d, p) in enumerate(zip(mtul, self.pipes)) if d == min(mtul) and "RIGHT" in p.directions and self.check(p)].pop()
         left, middle, right = self.pipes[:upper_left], [self.pipes[upper_left]], self.pipes[(upper_left + 1):]
         self.pipes = list(middle + right + left)
-        #### CHECK DIRECTION OF LOOP - May not be needed
         check_direction = self.pipes[0].go("RIGHT") == self.pipes[1].position
         if not check_direction:
             self.pipes = [self.pipes[0]] + self.pipes[::-1]
-        # print("START POSITION:", self.pipes[0].position, self.pipes[0].symbol, self.pipes[0].directions)
-        #####
-        self._index = 0
-        self._last_dir = "RIGHT"
-        self._normal = "DOWN"
+        self._index, self._last_dir, self._normal = 0, "RIGHT", "DOWN"
         return self
     
     def __next__(self) -> "Pipe":
-        if self._index < (len(self) - 1): # Assume that the last pipe doesn't need 
-            ## When going to the next pipe in the chain, the new normal can be found using the following cases:
-            # 1) If the next pipe is not going to turn, the normal stays the same
-            # 2) If the next pipe is going to turn:
-            # 2.1) If the next pipe is turning in the direction of the normal, set the new normal to the opposite of the old direction
-            # 2.2) If the next pipe is turning in the opposite direction of the normal, set the new normal to the old direction
-            # OBS: during the turn query both the old and new normal from the corner pipe
+        if self._index < (len(self) - 1):
             current = self[self._index]
-            #inner = current.go_to_chain(self, self._normal)
             directions = current.directions
             if self._index == 0:
                 new_direction = "RIGHT"
             else:
                 new_direction = [i for i in directions if i != REFLECT[self._last_dir]].pop()
-            # print(current, new_direction, self._normal)
+            ray_count = current.go_to_chain(self, self._normal)
             if new_direction == self._last_dir:
-                ray_count = current.go_to_chain(self, self._normal)
-            elif new_direction == REFLECT[self._last_dir]:
-                raise RuntimeError(f'Unexpected direction {new_direction} coming from {current.position} ({self._last_dir})')
+                pass
             else:
                 if new_direction == self._normal:
-                    self._normal = REFLECT[self._last_dir]
-                    ray_count = 0
+                    self._normal, ray_count = REFLECT[self._last_dir], 0
                 else:
-                    ray_count = current.go_to_chain(self, self._normal)
-                    self._normal = self._last_dir
+                    self._normal = self._last_dir 
                     ray_count += current.go_to_chain(self, self._normal)
                 self._last_dir = new_direction
             self._index += 1
             return ray_count
-        print("Finished running on chain")
         raise StopIteration
 
     def create_hash(self, pipe : "Pipe") -> str:
@@ -161,8 +134,7 @@ class Chain:
         if self.check(new):
             self.open = False
         else:
-            if index < 0:
-                index = len(self) - index + 1
+            index = len(self) - index + 1 if index < 0 else index                
             self.hash_check.update({self.create_hash(new) : None})
             self.pipes.insert(index, new)
 
@@ -181,66 +153,34 @@ class Chain:
         position = self.where(x, y)
         return [min(abs(position - i), abs(position - (len(self) + i))) for i in range(len(self))]
     
-    def _propagate(self, current : Union[None, "Pipe"]=None, prior : Union[None, list[str]]=None, direction : Union[list[int], list[int, int]]=[0, -1]):
+    def _propagate(self, current : Union[None, "Pipe"]=None, prior : Union[list, list[str]]=[]):
         global board
-        if current is None:
-            current = self.pipes[0]
+        current = self.pipes[0] if current is None else current            
         old_directions = deepcopy(current.directions)
-        if not prior is None:
-            for p in prior:
-                pr = REFLECT[p]
-                if pr in current.directions:
-                    current.directions.remove(pr)
-        dcons, cons = current.connections()
+        [current.directions.remove(REFLECT[p]) for p in prior if REFLECT[p] in current.directions]   
+        dcon, con = current.connections()
+        fd = [d for d in DIRECTION_TO_OFFSET if d in dcon].pop(0) if len(con) == 2 else dcon[0]
+        dcon, con = fd, con[dcon.index(fd)]
         current.directions = old_directions
-        bfs_queue = []
-        for dir, dcon, con in zip(direction, dcons, cons):
-            xc, yc = con
-            # Skip out of bounds connections
-            if xc < 0 or yc < 0 or xc >= board.width or yc >= board.height:
-                continue
-            new = deepcopy(board[[xc, yc]])
-            self.insert(new, dir)
-            if self.open is False:
-                break
-            bfs_queue.append([new, [dcon], [dir]])
-        return bfs_queue
+        new = deepcopy(board[con])
+        self.insert(new, -1)
+        return new, [dcon]
 
-    def bfs(self) -> "Chain":
+    def follow(self) -> "Chain":
         _next = self._propagate()
         while self.open:
-            _next = [elem for i in _next for elem in self._propagate(*i)]
+            _next = self._propagate(*_next)
          
 class Board:
     def __init__(self, rows : list[list["Pipe"]]) -> None:
-        self.rows = rows
-        self.width = len(self.rows[0])
-        self.height = len(self.rows)
+        self.rows, self.width, self.height = rows, len(rows[0]), len(rows)
 
     def __len__(self) -> int:
         return sum([len(row) for row in self.rows])
 
     def __getitem__(self, i : Union[int, list[int, int]]) -> "Pipe":
-        if isinstance(i, int):
-            assert i < len(self), IndexError(f"Index '{i}' out of bounds for board of size {len(self)}")
-            x, y = i % self.width, i // self.width
-        elif isinstance(i, list):
-            x, y = i
-        else:
-            raise TypeError(f"Unsupported indexing type of '{type(i)}' to Board")
-        assert x < self.width and y < self.height, IndexError(f"Indexes (x,y)='{x},{y}' out of bounds for board of size ({self.width},{self.height})")
+        x, y = (i % self.width, i // self.width) if isinstance(i, int) else i
         return self.rows[y][x]
-
-    def __iter__(self) -> "Board":
-        self._current_index = 0
-        return self
-    
-    def __next__(self) -> "Pipe":
-        if self._current_index < len(self):
-            x = self[self._current_index]
-            self._current_index += 1
-            return x
-        raise StopIteration
 
 
 path = "inputs/10.input"
@@ -257,39 +197,30 @@ with open(path, "r") as file:
     
     start.directions = start.query_connection(board)
     chain = Chain(deepcopy(start))
-    chain.bfs()
-    distances = chain.distance(*start.position)
-    print(max(distances))
-    print()
-
-    for row in board.rows:
-        for elem in row:
-            print(elem, end = " ")
-        print()
+    chain.follow()
+    print(max(chain.distance(*start.position)))
 
     # Part 2 - Shoot inside the chain
-    counted = []
-    for row in range(board.height):
-        counted.append([])
-        for elem in range(board.width):
-            counted[-1].append(0)
-    area = 0
-    for ray in chain:
-        # print(ray)
-        area += ray
-    print()
-    for row, (rowc, rowp) in enumerate(zip(counted, board.rows)):
-        for col, (count, elem) in enumerate(zip(rowc, rowp)):
-            if count != 0:
-                print(Style.BRIGHT + Fore.BLUE + str(count) + Fore.RESET + Style.RESET_ALL, end = " ")
-            # else:
-            #     print(count, end ="")
-            else:
-                if chain.check_pos(col, row):
-                    print(Style.BRIGHT + Fore.RED + elem.symbol + Fore.RESET + Style.RESET_ALL, end = " ")
-                else:
-                    print(elem, end = " ")
-        print()
-    print()
-    print(area)
-    
+    counted = [[0] * board.width for _ in range(board.height)]
+    print(sum([ray for ray in chain]))
+
+
+### EXTRA CODE FOR TERMINAL VIZ
+    # # Creates initial map
+    # for row in board.rows:
+    #     for elem in row:
+    #         print(elem, end = "")
+    #     print()
+    # # Creates map for part 2
+    # for row, (rowc, rowp) in enumerate(zip(counted, board.rows)):
+    #     for col, (count, elem) in enumerate(zip(rowc, rowp)):
+    #         if count != 0:
+    #             print(Style.BRIGHT + Fore.BLUE + str(count) + Fore.RESET + Style.RESET_ALL, end = " ")
+    #         # else:
+    #         #     print(count, end ="")
+    #         else:
+    #             if chain.check_pos(col, row):
+    #                 print(Style.BRIGHT + Fore.RED + elem.symbol + Fore.RESET + Style.RESET_ALL, end = " ")
+    #             else:
+    #                 print(elem, end = " ")
+    #     print()
