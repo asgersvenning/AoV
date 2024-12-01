@@ -9,8 +9,6 @@
 # Restate:
 #   Given two lists of numbers, compute the element-wise absolute difference between the two sorted lists.
 
-import os
-
 def parse_input(path):
     with open(path, "r") as f:
         return zip(*[[int(n) for n in line.strip().split("   ")] for line in f.readlines()])
