@@ -1,5 +1,3 @@
-from functools import reduce
-
 def parse_input(path):
     rules, updates, isRule = [], [], True
     with open(path, "r") as f:
