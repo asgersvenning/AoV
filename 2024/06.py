@@ -1,5 +1,3 @@
-from colorama import Fore, Style
-
 SYMBOLS = {
     "^" : 2,
     "#" : 1,
@@ -62,9 +60,10 @@ def pretty_print(data, guard, moves):
     return "\n".join(["".join([CLI_SYMBOLS[n] for n in line]) for line in data])
 
 def animate_frames(frames, speed=0.05):
+    from time import sleep
+
     from rich.console import Console
     from rich.live import Live
-    from time import sleep
 
     console = Console()  # Create a Console object
     with Live("", console=console, refresh_per_second=1/speed) as live:
@@ -143,7 +142,6 @@ def check_obstacle_ray(board, guard):
             break
     return any([tile == 1 for tile in tiles])
 
-
 def get_possible_obstacles(board):
     n = len(board)
     guard, walls = get_objects(board)
@@ -210,8 +208,9 @@ def part2(board, mp=True, visualize=False):
     if mp:
         if visualize:
             raise ValueError("Cannot visualize with multiprocessing")
-        from tqdm.contrib.concurrent import process_map
         from itertools import cycle
+
+        from tqdm.contrib.concurrent import process_map
         return sum(process_map(inner, obstacles, cycle([board]), chunksize=5, leave=False))
     if visualize:
         print([inner(o, board, animate=True) for o in obstacles])

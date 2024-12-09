@@ -8,7 +8,9 @@
 # Restate:
 #   Given a matrix of characters, find all sequences "XMAX" either forward, backward and diagonally.
 
-import torch, re
+import re
+
+import torch
 
 CMAP = {"X" : 2 ** (1/2), "M" : 3 ** (1/2), "A" : 5 ** (1/2), "S" : 7 ** (1/2), "." : 0}
 

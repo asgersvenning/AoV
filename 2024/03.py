@@ -14,6 +14,7 @@
 import re
 from math import prod
 
+
 def parse_input(path):
     with open(path, "r") as f:
         return "".join(map(str.strip, f.readlines()))

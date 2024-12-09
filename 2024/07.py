@@ -1,6 +1,7 @@
 def parse_input(path):
     with open(path, "r") as f:
         return [[int(c) for c in line.strip().replace(":", "").split(" ")] for line in f.readlines()]
+
 class Equation:
     def __init__(self, values, part2=False):
         self.result = values[0]

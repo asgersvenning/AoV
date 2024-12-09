@@ -1,5 +1,6 @@
-import torch
 import numpy as np
+import torch
+
 
 def parse_input(path):
     with open(path, "r") as f:
