@@ -4,9 +4,7 @@ def parse_input(path):
 
 class Equation:
     def __init__(self, values, part2=False):
-        self.result = values[0]
-        self.values = values[1:]
-        self.OPERATORS = [lambda x, y : x + y, lambda x, y : x * y]
+        self.result, self.values, self.OPERATORS = values[0], values[1:], [lambda x, y : x + y, lambda x, y : x * y]
         if part2:
             self.OPERATORS.append(lambda x, y : int(f'{x}{y}'))
 
@@ -26,26 +24,12 @@ class Equation:
     
     def __repr__(self):
         return str(self.result) + " = " + " x ".join(map(str, self.values))
-    
-def part1(data):
-    total = 0
-    for line in data:
-        calibration = Equation(line)
-        if calibration.test():
-            total += calibration.result
-    return total
 
-print(part1(parse_input("2024/inputs/07.test")))
-print(part1(parse_input("2024/inputs/07.input")))
+def solution(data, part : int=1):
+    return sum([calibration.result for line in data if (calibration := Equation(line, part2=part==2)).test()])    
 
+# print(part1(parse_input("2024/inputs/07.test"), 1))
+print(solution(parse_input("2024/inputs/07.input"), 1))
 
-def part2(data):
-    total = 0
-    for line in data:
-        calibration = Equation(line, part2=True)
-        if calibration.test():
-            total += calibration.result
-    return total
-
-print(part2(parse_input("2024/inputs/07.test")))
-print(part2(parse_input("2024/inputs/07.input")))
+# print(part2(parse_input("2024/inputs/07.test"), 2))
+print(solution(parse_input("2024/inputs/07.input"), 2))

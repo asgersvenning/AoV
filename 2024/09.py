@@ -11,15 +11,13 @@ def parse_input(path : str):
     
 def get_input(type : str="test"):
     dir, file = os.path.split(__file__)    
-    day, _ = os.path.splitext(file)
-    return parse_input(os.path.join(dir, "inputs", day + "." + type))
+    return parse_input(os.path.join(dir, "inputs", os.path.splitext(file)[0] + "." + type))
     
 def expand_view(data : list[int], ids : list[bool]) -> list[str]:
     return [c for size, id in zip(data, ids) for c in [str(id) if id != -1 else "."] * size]
 
 def spans(indices, max):
-    breaks = [p for p, (i, j) in enumerate(zip(indices, indices[1:])) if (j - i) > 1]
-    return SortedDict({indices[start + 1] : indices[start + 1] + end - start for start, end in zip(([-1] + breaks), (breaks + [max]))})
+    return SortedDict({indices[start + 1] : indices[start + 1] + end - start for start, end in zip(([-1] + breaks), (breaks + [max]))} if (breaks := [p for p, (i, j) in enumerate(zip(indices, indices[1:])) if (j - i) > 1]) else {})
 
 class File:
     def __init__(self, id, disk, start=None, size=None, indices=None, maintain_disk : bool=True, with_spans : bool=False):
@@ -42,6 +40,7 @@ class File:
             else:
                 self.spans[i] = i + 1
                 return self
+            
             if overshoot == 1 or undershoot == 1:
                 if overshoot == 1:
                     next_start, next_end = self.spans.peekitem(j + 1)
@@ -62,6 +61,7 @@ class File:
             for start, end in self.spans.items():
                 if start <= i and i < end:
                     break
+            
             if (end - start) <= 1:
                 self.spans.pop(start)
             else:
@@ -105,14 +105,17 @@ def preprocess(data : list[int], visualize : slice | bool | None=False):
             
 
 def part1(data : list[int], visualize : slice | bool | None=False):
+    
     disk, files, space, visualize, vis = preprocess(data, visualize)
+    
     files = {str(id) : File(id, disk, indices=i) for id, i in files.items()}
-    space = File(-1, disk, indices=space)
-    j = len(disk) - 1
+    space, j = File(-1, disk, indices=space), len(disk) - 1
+    
     for i in range(j):
         if disk[i] == ".":
             while not disk[j].isdigit():
                 j -= 1
+            
             if i >= j:
                 break
             space.swap(files[disk[j]], i, j)
@@ -122,15 +125,19 @@ def part1(data : list[int], visualize : slice | bool | None=False):
                     print(vis := next_vis, end="")
     if not visualize is None:
         print()
+    
     return sum([file.checksum() for _, file in files.items()])
     
 # print(part1(get_input(), True))
 print(part1(get_input("input")))
 
 def part2(data : list[int], visualize : slice | bool | None=False):    
+    
     disk, files, space, visualize, vis = preprocess(data, visualize)
+    
     files = SortedDict({int(id) : File(id, disk, indices=i, maintain_disk=not visualize is None) for id, i in files.items()})
     space = File(-1, disk, indices=space, maintain_disk=not visualize is None, with_spans=True)
+    
     for id in reversed(files):
         file = files[id]
         for start in space.spans:
@@ -138,13 +145,14 @@ def part2(data : list[int], visualize : slice | bool | None=False):
                     break
             if (space.spans[start] - start) >= len(file):
                 [space.swap(file, i, j) for i, j in zip(range(start, start + len(file)), file.indices.copy())]
-                break
+        
         if not visualize is None:
             if vis != (next_vis := "\r" + "|".join(disk[visualize])):
                 time.sleep(0.2)
                 print(vis := next_vis, end="")
     if not visualize is None:
         print()
+    
     return sum([file.checksum() for _, file in files.items()])
 
 # print(part2(get_input(), True))

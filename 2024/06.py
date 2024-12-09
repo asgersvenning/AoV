@@ -115,7 +115,7 @@ def part1(board, animate=False):
         animate_frames(frames)
     return len(positions)
 
-print(part1(parse_input("2024/inputs/06.test")))
+# print(part1(parse_input("2024/inputs/06.test")))
 print(part1(parse_input("2024/inputs/06.input")))
 
 def check_obstacle_ray(board, guard):
@@ -216,5 +216,5 @@ def part2(board, mp=True, visualize=False):
         print([inner(o, board, animate=True) for o in obstacles])
     return sum([inner(o, board) for o in obstacles])
 
-print(part2(parse_input("2024/inputs/06.test"), False))
+# print(part2(parse_input("2024/inputs/06.test"), False))
 print(part2(parse_input("2024/inputs/06.input")))

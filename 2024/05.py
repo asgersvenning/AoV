@@ -23,7 +23,7 @@ def part1(rules, updates):
         middles.append(update[len(update) // 2] if all(valid) else 0)
     return sum(middles)
      
-print(part1(*parse_input("2024/inputs/05.test")))
+# print(part1(*parse_input("2024/inputs/05.test")))
 print(part1(*parse_input("2024/inputs/05.input")))
 
 def reorder(update : list[int], ao : dict, bo : dict):
@@ -54,5 +54,5 @@ def part2(rules, updates):
             middles.append(sorted_update[len(sorted_update) // 2])
     return sum(middles)
 
-print(part2(*parse_input("2024/inputs/05.test")))
+# print(part2(*parse_input("2024/inputs/05.test")))
 print(part2(*parse_input("2024/inputs/05.input")))
