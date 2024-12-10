@@ -1,7 +1,8 @@
-def parse_input(path):
+from helpers import *
+
+def parse_input(type : str):
     rules, updates, isRule = [], [], True
-    with open(path, "r") as f:
-        [(rules if isRule else updates).append(list(map(int, line.split("|" if isRule else ",")))) for line in list(map(str.strip, f.readlines())) if line != "" or (isRule := not isRule)]
+    [(rules if isRule else updates).append(list(map(int, line.split("|" if isRule else ",")))) for line in get_lines(get_path(type)) if line != "" or (isRule := not isRule)]
     return rules, updates
 
 def ordering(before_after):
@@ -14,17 +15,17 @@ def part1(rules, updates):
     middles = []
     for update in updates:
         valid = []
-        for i in range(len(update)):
-            b, v, a = update[:i], update[i], update[(i+1):]
-            if any([bv in ao.get(v, []) for bv in b]) or any([av in bo.get(v, []) for av in a]):
+        for i, v in enumerate(update):
+            b, a = update[:i], update[(i+1):]
+            if any(bv in ao.get(v, []) for bv in b) or any(av in bo.get(v, []) for av in a):
                 valid.append(False)
                 break
             valid.append(True)
         middles.append(update[len(update) // 2] if all(valid) else 0)
     return sum(middles)
-     
-# print(part1(*parse_input("2024/inputs/05.test")))
-print(part1(*parse_input("2024/inputs/05.input")))
+
+# print(part1(*parse_input("test")))
+print(part1(*parse_input("input")))
 
 def reorder(update : list[int], ao : dict, bo : dict):
     if len(update) <= 1:
@@ -50,9 +51,9 @@ def part2(rules, updates):
     middles = []
     for update in updates:
         sorted_update = reorder(update, ao, bo)
-        if not all([i == j for i, j in zip(update, sorted_update)]):
+        if not all(i == j for i, j in zip(update, sorted_update)):
             middles.append(sorted_update[len(sorted_update) // 2])
     return sum(middles)
 
-# print(part2(*parse_input("2024/inputs/05.test")))
-print(part2(*parse_input("2024/inputs/05.input")))
+# print(part2(*parse_input("test")))
+print(part2(*parse_input("input")))

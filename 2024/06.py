@@ -1,3 +1,5 @@
+from helpers import *
+
 SYMBOLS = {
     "^" : 2,
     "#" : 1,
@@ -12,16 +14,13 @@ CLI_SYMBOLS = {
     -2 : "🟡"
 }
 
-def parse_input(path):
-    with open(path, "r") as f:
-        content = [[SYMBOLS[c] for c in line.strip()] for line in f.readlines()]
-    return content
+def parse_input(type : int):
+    return [[SYMBOLS[c] for c in line.strip()] for line in get_lines(get_path(type))]
 
 def get_objects(data):
     walls = []
-    for i in range(len(data)):
-        for j in range(len(data[i])):
-            tile = data[i][j]
+    for i, line in enumerate(data):
+        for j, tile in enumerate(line):
             match tile:
                 case 0:
                     pass
@@ -54,7 +53,7 @@ def pretty_print(data, guard, moves):
     ni, nj = i + di, j + dj
     try:
         if data[ni][nj] == 0:
-            data[ni][nj] = -1 
+            data[ni][nj] = -1
     except IndexError:
         pass
     return "\n".join(["".join([CLI_SYMBOLS[n] for n in line]) for line in data])
@@ -98,7 +97,7 @@ def move_guard(data, guard):
     return data, guard, True
 
 def part1(board, animate=False):
-    guard, walls = get_objects(board)
+    guard, _ = get_objects(board)
     in_bounds = True
     positions = set()
     if animate:
@@ -115,8 +114,8 @@ def part1(board, animate=False):
         animate_frames(frames)
     return len(positions)
 
-# print(part1(parse_input("2024/inputs/06.test")))
-print(part1(parse_input("2024/inputs/06.input")))
+# print(part1(parse_input("test")))
+print(part1(parse_input("input")))
 
 def check_obstacle_ray(board, guard):
     i, j, d = guard
@@ -140,11 +139,11 @@ def check_obstacle_ray(board, guard):
             tiles.append(tile)
         except IndexError:
             break
-    return any([tile == 1 for tile in tiles])
+    return any(tile == 1 for tile in tiles)
 
 def get_possible_obstacles(board):
     n = len(board)
-    guard, walls = get_objects(board)
+    guard, _ = get_objects(board)
     in_bounds = True
     positions = {}
     while in_bounds:
@@ -172,7 +171,7 @@ def get_possible_obstacles(board):
 
 def check_cycle(board, animate = False):
     n = len(board)
-    guard, walls = get_objects(board)
+    guard, _ = get_objects(board)
     is_cycle = False
     in_bounds = True
     positions = {}
@@ -201,20 +200,21 @@ def inner(oij, iboard, fn=check_cycle, *args, **kwargs):
     oi, oj = oij
     new_board = [l.copy() for l in iboard]
     new_board[oi][oj] = 1
-    return fn(new_board, *args, **kwargs)  
+    return fn(new_board, *args, **kwargs)
 
 def part2(board, mp=True, visualize=False):
     obstacles = get_possible_obstacles([l.copy() for l in board])
     if mp:
         if visualize:
             raise ValueError("Cannot visualize with multiprocessing")
-        from itertools import cycle
 
+        from itertools import cycle
         from tqdm.contrib.concurrent import process_map
+
         return sum(process_map(inner, obstacles, cycle([board]), chunksize=5, leave=False))
     if visualize:
         print([inner(o, board, animate=True) for o in obstacles])
-    return sum([inner(o, board) for o in obstacles])
+    return sum(inner(o, board) for o in obstacles)
 
-# print(part2(parse_input("2024/inputs/06.test"), False))
-print(part2(parse_input("2024/inputs/06.input")))
+# print(part2(parse_input("test"), False))
+print(part2(parse_input("input")))
