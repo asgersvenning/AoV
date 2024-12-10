@@ -1,7 +1,7 @@
 import numpy as np
 import torch
 
-from helpers import *
+from helpers import get_lines, get_path
 
 def parse_input(type : str):
     data, antennas = list(map(list, get_lines(get_path(type)))), {}

@@ -2,7 +2,7 @@ import bisect
 import time
 
 from sortedcontainers import SortedDict
-from helpers import *
+from helpers import get_lines, get_path
 
 def parse_input(type : str):
     return list(map(int, get_lines(get_path(type))[0]))

@@ -1,4 +1,4 @@
-from helpers import *
+from helpers import get_lines, get_path
 
 def parse_input(type : str):
     rules, updates, isRule = [], [], True

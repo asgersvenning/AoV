@@ -3,7 +3,7 @@ import re
 import torch
 import torch.nn.functional as F
 
-from helpers import *
+from helpers import get_lines, get_path
 
 CMAP = {"X" : 2 ** (1/2), "M" : 3 ** (1/2), "A" : 5 ** (1/2), "S" : 7 ** (1/2), "." : 0}
 

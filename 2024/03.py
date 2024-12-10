@@ -1,7 +1,7 @@
 import re
 from math import prod
 
-from helpers import *
+from helpers import get_lines, get_path
 
 def parse_input(type : str):
     return "".join(get_lines(get_path(type)))

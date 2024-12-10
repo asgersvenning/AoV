@@ -1,4 +1,4 @@
-from helpers import *
+from helpers import get_lines, get_path
 
 def parse_input(type : str):
     return [[int(c) for c in line.strip().replace(":", "").split(" ")] for line in get_lines(get_path(type))]
