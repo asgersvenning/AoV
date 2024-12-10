@@ -2,15 +2,17 @@ from helpers import *
 
 def parse_input(type : str):
     rules, updates, isRule = [], [], True
+    rules : list[list[int]]
+    updates : list[list[int]]
     [(rules if isRule else updates).append(list(map(int, line.split("|" if isRule else ",")))) for line in get_lines(get_path(type)) if line != "" or (isRule := not isRule)]
     return rules, updates
 
-def ordering(before_after):
+def ordering(before_after : list[list[int]]):
     rules, inv_rules = {}, {}
     [(lambda x, y : None)(rules.update({before : rules.get(before, []) + [after]}), inv_rules.update({after : inv_rules.get(after, []) + [before]})) for before, after in before_after]
     return rules, inv_rules
 
-def part1(rules, updates):
+def part1(rules : list[list[int]], updates : list[list[int]]):
     ao, bo = ordering(rules)
     middles = []
     for update in updates:
@@ -46,7 +48,7 @@ def reorder(update : list[int], ao : dict, bo : dict):
             return reorder(b + bn, ao, bo) + [e] + reorder(an + a, ao, bo)
     return update
 
-def part2(rules, updates):
+def part2(rules : list[list[int]], updates : list[list[int]]):
     ao, bo = ordering(rules)
     middles = []
     for update in updates:

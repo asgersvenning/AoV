@@ -14,22 +14,25 @@ CLI_SYMBOLS = {
     -2 : "🟡"
 }
 
-def parse_input(type : int):
+def parse_input(type : str):
     return [[SYMBOLS[c] for c in line.strip()] for line in get_lines(get_path(type))]
 
-def get_objects(data):
-    walls = []
+def get_objects(data : list[list[int]]):
+    walls, guard = [], None
+    walls : list[tuple[int, int]]
     for i, line in enumerate(data):
         for j, tile in enumerate(line):
             match tile:
                 case 0:
                     pass
                 case 1:
-                    walls.append([i, j])
+                    walls.append((i, j))
                 case 2:
                     guard = [i, j, 1]
                 case _:
                     raise ValueError("Unknown tile", tile, "found")
+    if guard is None:
+        raise RuntimeError("No guard found in data")
     return guard, walls
 
 # Guard orientiation: LTRB
@@ -96,12 +99,10 @@ def move_guard(data, guard):
             raise RuntimeError("Invalid tile", tile)
     return data, guard, True
 
-def part1(board, animate=False):
+def part1(board : list[list[int]], animate=False):
     guard, _ = get_objects(board)
-    in_bounds = True
-    positions = set()
+    in_bounds, positions, frames = True, set(), []
     if animate:
-        frames = []
         frame = pretty_print(board, guard, positions)
         frames.append(frame)
     while in_bounds:
@@ -117,7 +118,7 @@ def part1(board, animate=False):
 # print(part1(parse_input("test")))
 print(part1(parse_input("input")))
 
-def check_obstacle_ray(board, guard):
+def check_obstacle_ray(board : list[list[int]], guard : list[int]):
     i, j, d = guard
     ni, nj = DELTA[d]
     try:
@@ -141,7 +142,7 @@ def check_obstacle_ray(board, guard):
             break
     return any(tile == 1 for tile in tiles)
 
-def get_possible_obstacles(board):
+def get_possible_obstacles(board : list[list[int]]):
     n = len(board)
     guard, _ = get_objects(board)
     in_bounds = True
@@ -169,14 +170,10 @@ def get_possible_obstacles(board):
             obstacle_collission.add(oh)
     return possible_obstacles
 
-def check_cycle(board, animate = False):
-    n = len(board)
+def check_cycle(board : list[list[int]], animate = False):
     guard, _ = get_objects(board)
-    is_cycle = False
-    in_bounds = True
-    positions = {}
+    is_cycle, in_bounds, positions, frames, n = False, True, {}, [], len(board)
     if animate:
-        frames = []
         frame = pretty_print(board, guard, positions)
         frames.append(frame)
     while in_bounds and not is_cycle:

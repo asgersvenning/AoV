@@ -7,18 +7,18 @@ from helpers import *
 def parse_input(type : str):
     return list(map(int, get_lines(get_path(type))[0]))
 
-def expand_view(data : list[int], ids : list[bool]) -> list[str]:
+def expand_view(data : list[int], ids : list) -> list[str]:
     return [c for size, id in zip(data, ids) for c in [str(id) if id != -1 else "."] * size]
 
-def spans(indices, size):
+def spans(indices : list[int], size : int):
     return SortedDict({indices[start + 1] : indices[start + 1] + end - start for start, end in zip(([-1] + breaks), (breaks + [size]))} if (breaks := [p for p, (i, j) in enumerate(zip(indices, indices[1:])) if (j - i) > 1]) else {})
 
 class File:
-    def __init__(self, id, disk, start=None, size=None, indices=None, maintain_disk : bool=True, with_spans : bool=False):
+    def __init__(self, id, disk, start=0, size=0, indices=None, maintain_disk : bool=True, with_spans : bool=False):
         self._maintain_disk, self._with_spans = maintain_disk, with_spans
-        self.disk, self.file, self.id = disk, id != -1, (id if id != -1 else None)
-        self.indices = list(range(start, start+size))if indices is None else sorted(indices)
-        self.spans = spans(self.indices, len(self)) if self._with_spans else None
+        self.disk, self.file, self.id = disk, id != -1, id
+        self.indices = list(range(start, start+size)) if indices is None else sorted(indices)
+        self.spans = spans(self.indices, len(self)) if self._with_spans else SortedDict()
 
     def __len__(self):
         return len(self.indices)
@@ -28,7 +28,6 @@ class File:
         if self._maintain_disk:
             self.disk[i] = str(self.id) if self.file else "."
         if self._with_spans:
-            self.spans : SortedDict
             for j, (start, end) in enumerate(self.spans.items()):
                 if ((overshoot := i - (end - 1)) == 1) | ((undershoot := start - i) == 1) | (overshoot > 1):
                     break
@@ -53,7 +52,6 @@ class File:
         if self._maintain_disk:
             self.disk[i] = "?"
         if self._with_spans:
-            self.spans : SortedDict
             for start, end in self.spans.items():
                 if start <= i < end:
                     break
