@@ -1,4 +1,3 @@
-from functools import lru_cache
 from helpers import get_lines, get_path
 
 def parse_input(type : str):
@@ -26,14 +25,20 @@ def part1(sequence : list[int], n : int=25):
 print(part1(parse_input("test")))
 # print(part1(parse_input("input")))
 
-@lru_cache(maxsize=None)
+cache = []
+
 def blink1_many(stone : int, n : int):
+    global cache
     if n == 0:
         return 1
-    return sum(blink1_many(new, n - 1) for new in transmute(stone))
+    while n >= len(cache):
+        cache += [{}]    
+    if not stone in cache[n]:
+        cache[n][stone] = sum(blink1_many(new, n - 1) for new in transmute(stone))
+    return cache[n][stone]
 
 def part2(sequence : list[int], n : int=75):
     return sum(blink1_many(stone, n) for stone in sequence)
 
 # print(part2(parse_input("test"), 25))
-print(part2(parse_input("input")))
+print(part2(parse_input("input"), 75))
