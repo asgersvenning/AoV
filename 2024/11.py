@@ -35,3 +35,8 @@ def part2(sequence : list[int], n : int=75):
 
 # print(part2(parse_input("test"), 25))
 print(part2(parse_input("input"), 75))
+
+# import sys
+# sys.setrecursionlimit(1000000)
+# blink1000 = part2(parse_input("input"), 1000)
+# print(len(str(blink1000)), blink1000)
