@@ -1,18 +1,17 @@
 import colorama
 
-SQUARE = "■"
-CIRCLE = "●"
-TRIANGLE = "▲"
-DIAMOND = "◆"
-SYMBOLS = [SQUARE, CIRCLE, TRIANGLE, DIAMOND]
+from collections import deque
+
+from helpers import get_path, get_input_matrix
+
+SYMBOLS = list("■●▲◆")
+SQUARE, CIRCLE, TRIANGLE, DIAMOND = SYMBOLS
 
 BLACK, GREEN, RED, YELLOW, BLUE, MAGENTA, CYAN, WHITE, RESET = colorama.Fore.BLACK, colorama.Fore.GREEN, colorama.Fore.RED, colorama.Fore.YELLOW, colorama.Fore.BLUE, colorama.Fore.MAGENTA, colorama.Fore.CYAN, colorama.Fore.WHITE, colorama.Fore.RESET
 COLORS = [GREEN, RED, YELLOW, BLUE, MAGENTA, CYAN, BLACK, WHITE]
 
-from helpers import get_path, get_lines
-
 def parse_input(type : str):
-    return [list(line) for line in get_lines(get_path(type))]
+    return get_input_matrix(get_path(type), str)
 
 def get_unique(garden : list[list[str]]):
     return sorted(set(plot for row in garden for plot in row))
@@ -107,46 +106,34 @@ DIRECTIONS = {
     "left" : (0, -1),
     "up" : (-1, 0)
 }
-INV_DIRECTION = {f'{di},{dj}' : name for name, (di, dj) in DIRECTIONS.items()}
+INV_DIRECTION = {v : k for k, v in DIRECTIONS.items()}
 
-ORDER = {
-    "right" : ["up", "right", "down", "left"],
-    "down" : ["right", "down", "left", "up"],
-    "left" : ["down", "left", "up", "right"],
-    "up" : ["left", "up", "right", "down"]
-}
+def rotate(it, n=0):
+    it = deque(it)
+    it.rotate(n)
+    return list(it)
 
-OPPOSITE = {
-    "right" : "left",
-    "down" : "up"
-}
-OPPOSITE.update({v : k for k, v in OPPOSITE.items()})
-
+ORDER = {d : rotate(DIRECTIONS.keys(), 1-i) for i, d in enumerate(DIRECTIONS.keys())}
+OPPOSITE = {k : v[-1] for k, v in ORDER.items()}
 
 def points_are_neighbours(a : tuple[int, int], b : tuple[int, int]):
-    return sum([abs(p - q) for p, q in zip(a, b)]) == 1
-
-def points_are_equal(a : tuple[int, int], b : tuple[int, int]):
-    return all([p == q for p, q in zip(a, b)])
-
-def point_in_points(a : tuple[int, int], b : list[tuple[int, int]]):
-    return any(points_are_equal(a, o) for o in b)
+    return sum(abs(p - q) for p, q in zip(a, b)) == 1
 
 def connected_components(points : list[tuple[int, int]]) -> list[list[tuple[int, int]]]:
     components = {}
     idx = -1
     while points:
         idx += 1
-        next = points.pop()
+        nxt = points.pop()
         combiners = []
         for i, component in components.items():
-            if any(points_are_neighbours(next, other) for other in reversed(component)):
+            if any(points_are_neighbours(nxt, other) for other in reversed(component)):
                 combiners.append(i)
         if len(combiners) == 0:
-            components[idx] = [next]
+            components[idx] = [nxt]
             continue
         selected = combiners.pop()
-        components[selected].append(next)
+        components[selected].append(nxt)
         while combiners:
             components[selected] += components.pop(combiners.pop())
     return list(components.values())
@@ -156,7 +143,7 @@ def holes(region : list[tuple[int, int]]):
     min_i, max_i = min(i_s), max(i_s)
     min_j, max_j = min(j_s), max(j_s)
     holes : list[list[tuple[int, int]]] = []
-    for component in connected_components([point for j in range(min_j - 2, max_j + 2) for i in range(min_i - 2, max_i + 2) if not point_in_points(point := (i, j), region)]):
+    for component in connected_components([point for j in range(min_j - 2, max_j + 2) for i in range(min_i - 2, max_i + 2) if not (point := (i, j)) in region]):
         i_s, j_s = map(set, zip(*component))
         c_min_i, c_max_i = min(i_s), max(i_s)
         c_min_j, c_max_j = min(j_s), max(j_s)
@@ -176,41 +163,15 @@ def simply_region(region : list[tuple[int, int]]):
                 simple.append(corner)
     return simple
 
-def sides(region : list[tuple[int, int]], can_have_holes : bool=True, debug : bool=False):
+def sides(region : list[tuple[int, int]], can_have_holes : bool=True):
     if len(region) == 0:
         return 0, region
-    region = sorted(region)
-    if len(region) <= 2:
-        return 4, region
-    if len(set(i for i, _ in region)) == 1 or len(set(j for _, j in region)) == 1:
-        return 4, region
-    if len(region) == 3:
-        return 6, region
     region = sorted(simply_region(region))
-    if not can_have_holes and debug:
-        print(stringify_contour(region)[0]) 
     direction, n_sides, order = "up", 0, [0]
-    while True:
-        ci, cj = region[order[-1]]
-        neighbours = [region.index(neighbour) for di, dj in [DIRECTIONS[name] for name in ORDER[direction]] if point_in_points(neighbour := (ci + di, cj + dj), region)]
-        if len(neighbours) == 0:
-            raise RuntimeError()
-        order.append(neighbours[0])
-        ndirection = INV_DIRECTION[f'{region[order[-1]][0] - ci},{region[order[-1]][1] - cj}']
-        if len(order) > 2 and order[:2] == order[-2:]:
-            order.pop()
-            if direction == "left":
-                n_sides += 1
-            break
-        n_sides += 0 if direction == ndirection else 1# 2 if direction == OPPOSITE[ndirection] else 1
-        if direction == OPPOSITE[ndirection]:
-            raise RuntimeError()
-        direction = ndirection
-    if can_have_holes:
-        n_inside_sides = sum(sides(hole, False, debug)[0] for hole in holes(region))
-    else:
-        n_inside_sides = 0
-    return n_sides + n_inside_sides, [region[i] for i in order]
+    while len(order) <= 2 or order[:2] != order[-2:]:
+        order.append([region.index(neighbour) for di, dj in [DIRECTIONS[name] for name in ORDER[direction]] if (neighbour := (region[order[-1]][0] + di, region[order[-1]][1] + dj)) in region][0])
+        n_sides += 0 if direction == (direction := INV_DIRECTION[(region[order[-1]][0] - region[order[-2]][0],region[order[-1]][1] - region[order[-2]][-1])]) else 1
+    return n_sides - 1 + (sum(sides(hole, False)[0] for hole in holes(region)) if can_have_holes else 0), [region[i] for i in order[:-1]]
 
 def stringify_contour(contour : list[tuple[int, int]], background : str = SQUARE, color : str = RED):
     mi, mj = [min(map(lambda x : x[i], contour)) for i in range(2)]
@@ -226,12 +187,9 @@ def stringify_contour(contour : list[tuple[int, int]], background : str = SQUARE
 
 def part2(garden : list[list[str]], verbose : bool=False):
     solution = sum(sides(polygon)[0] * len(polygon) for _, _, polygon in regions(garden))
-    # solution = None
     if verbose:
         for i, (crop, _, polygon) in enumerate(regions(garden)):
-            # print(stringify_contour(polygon)[0])
-            # print("###############################")
-            n_side, contour = sides(polygon, debug=False)
+            n_side, contour = sides(polygon)
             contour_str, width = stringify_contour(contour, crop, COLORS[:-1][i % (len(COLORS) - 1)])
             print(f'{f' {i = } SIDES = {n_side} ':_^{width}}')
             print(contour_str)
@@ -239,12 +197,7 @@ def part2(garden : list[list[str]], verbose : bool=False):
         print("SOLUTION:", solution)
     return solution
 
-# part2(parse_input("test0"), verbose=True)
-# part2(parse_input("test1"), verbose=True)
-# part2(parse_input("test2"), verbose=True)
-# part2(parse_input("test3"), verbose=True)
 # part2(parse_input("test"), verbose=True)
-# for case in ["test1", "test0", "test2", "test3", "test"]:
+# for case in ["test1", "test0", "test2", "test3"]:
 #     print(part2(parse_input(case)))
-# print(part2(parse_input("test4"), True))
 print(part2(parse_input("input")))
