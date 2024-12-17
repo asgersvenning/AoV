@@ -2,7 +2,7 @@ import bisect
 import time
 
 from sortedcontainers import SortedDict
-from helpers import get_lines, get_path
+from helpers import get_lines, get_path, Animation
 
 def parse_input(type : str):
     return list(map(int, get_lines(get_path(type))[0]))
@@ -91,8 +91,6 @@ def preprocess(data : list[int], visualize : slice | bool | None=False):
 
     if isinstance(visualize, bool):
         visualize = None if not visualize else slice(0, len(disk), 1)
-    if not visualize is None:
-        print(vis := "|".join(disk[visualize]), end="")
 
     files, space = {}, []
     [space.append(i) if e == "." else files.update({e : files.get(e, []) + [i]}) for i, e in enumerate(disk)]
@@ -106,6 +104,7 @@ def part1(data : list[int], visualize : slice | bool | None=False):
     files = {str(id) : File(id, disk, indices=i) for id, i in files.items()}
     space, j = File(-1, disk, indices=space), len(disk) - 1
 
+    anim = Animation()
     for i in range(j):
         if disk[i] == ".":
             while not disk[j].isdigit():
@@ -115,15 +114,14 @@ def part1(data : list[int], visualize : slice | bool | None=False):
                 break
             space.swap(files[disk[j]], i, j)
             if not visualize is None:
-                if vis != (next_vis := "\r" + "|".join(disk[visualize])):
-                    time.sleep(0.2)
-                    print(vis := next_vis, end="")
+                if vis != (next_vis := "|".join(disk[visualize])):
+                    anim += (vis := next_vis)
     if not visualize is None:
-        print()
+        anim(speed=5/len(anim))
 
     return sum(file.checksum() for _, file in files.items())
 
-# print(part1(parse_input("test"), True))
+# part1(parse_input("test"), True)
 print(part1(parse_input("input")))
 
 def part2(data : list[int], visualize : slice | bool | None=False):
@@ -132,7 +130,7 @@ def part2(data : list[int], visualize : slice | bool | None=False):
 
     files = SortedDict({int(id) : File(id, disk, indices=i, maintain_disk=not visualize is None) for id, i in files.items()})
     space = File(-1, disk, indices=space, maintain_disk=not visualize is None, with_spans=True)
-
+    anim = Animation()
     for id in reversed(files):
         file = files[id]
         for start in space.spans:
@@ -142,13 +140,12 @@ def part2(data : list[int], visualize : slice | bool | None=False):
                 [space.swap(file, i, j) for i, j in zip(range(start, start + len(file)), file.indices.copy())]
 
         if not visualize is None:
-            if vis != (next_vis := "\r" + "|".join(disk[visualize])):
-                time.sleep(0.2)
-                print(vis := next_vis, end="")
+            if vis != (next_vis :=  "|".join(disk[visualize])):
+                anim += (vis := next_vis)
     if not visualize is None:
-        print()
+        anim(speed=5/len(anim))
 
     return sum(file.checksum() for _, file in files.items())
 
-# print(part2(parse_input("test"), True))
+# part2(parse_input("test"), True)
 print(part2(parse_input("input")))

@@ -1,7 +1,6 @@
-from helpers import get_path, get_lines
-
-from functools import reduce
 import numpy as np
+
+from helpers import Animation, get_lines, get_path
 
 class Robot:
     def __init__(self, line : str, size : tuple[int, int]=(101, 103)):
@@ -54,22 +53,10 @@ print(part1("input"))
 
 # Part 2
 
-from rich.console import Console
-from rich.live import Live
-
 SYMBOLS = list("■●▲◆")
 SQUARE, CIRCLE, TRIANGLE, DIAMOND = SYMBOLS
 
 COLORS = ["green", "red", "yellow", "blue", "magenta", "cyan", "black", "white"]
-
-def animate_frames(frames, speed=0.5):
-    console = Console()  # Create a Console object
-    with Live("", console=console, refresh_per_second=1/speed) as live:
-        for frame in frames:
-            live.console.clear()
-            live.update(frame)  # Update the displayed frame
-            input("next")
-    print()
     
 def render(room : np.ndarray):
     return "\n".join(
@@ -84,7 +71,6 @@ def render(room : np.ndarray):
 def part2(type : str):
     robots = parse_input(type)
     room_0_cost = room_cost(make_room(*robots))
-    frames = (f"Iteration: {i}\n" + render(room) for i in range(10000) if room_cost(room := make_room(*robots, it=i)) < (room_0_cost / 4))
-    animate_frames(frames)
-    
+    Animation(f"Iteration: {i}\n" + render(room) for i in range(10000) if room_cost(room := make_room(*robots, it=i)) < (room_0_cost / 4))(0, transient=False)
+
 part2("input")

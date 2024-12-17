@@ -1,4 +1,4 @@
-from helpers import get_lines, get_path
+from helpers import get_lines, get_path, Animation
 
 SYMBOLS = {
     "^" : 2,
@@ -61,19 +61,6 @@ def pretty_print(data, guard, moves):
         pass
     return "\n".join(["".join([CLI_SYMBOLS[n] for n in line]) for line in data])
 
-def animate_frames(frames, speed=0.05):
-    from time import sleep
-
-    from rich.console import Console
-    from rich.live import Live
-
-    console = Console()  # Create a Console object
-    with Live("", console=console, refresh_per_second=1/speed) as live:
-        for frame in frames:
-            live.update(frame)  # Update the displayed frame
-            sleep(speed)
-    print()
-
 def move_guard(data, guard):
     i, j, d = guard
     di, dj = DELTA[d]
@@ -102,20 +89,19 @@ def move_guard(data, guard):
 def part1(board : list[list[int]], animate=False):
     guard, _ = get_objects(board)
     in_bounds, positions, frames = True, set(), []
+    anim = Animation()
     if animate:
-        frame = pretty_print(board, guard, positions)
-        frames.append(frame)
+        anim += pretty_print(board, guard, positions)
     while in_bounds:
         positions.add(guard[0] + guard[1] * len(board))
         board, guard, in_bounds = move_guard(board, guard)
         if animate:
-            frame = pretty_print(board, guard, positions)
-            frames.append(frame)
+            anim += pretty_print(board, guard, positions)
     if animate:
-        animate_frames(frames)
+        anim(0.05)
     return len(positions)
 
-# print(part1(parse_input("test")))
+# part1(parse_input("test"), True)
 print(part1(parse_input("input")))
 
 def check_obstacle_ray(board : list[list[int]], guard : list[int]):
@@ -172,10 +158,10 @@ def get_possible_obstacles(board : list[list[int]]):
 
 def check_cycle(board : list[list[int]], animate = False):
     guard, _ = get_objects(board)
-    is_cycle, in_bounds, positions, frames, n = False, True, {}, [], len(board)
+    is_cycle, in_bounds, positions, n = False, True, {}, len(board)
+    anim = Animation()
     if animate:
-        frame = pretty_print(board, guard, positions)
-        frames.append(frame)
+        anim += pretty_print(board, guard, positions)
     while in_bounds and not is_cycle:
         board, guard, in_bounds = move_guard(board, guard)
         if not in_bounds:
@@ -187,10 +173,9 @@ def check_cycle(board : list[list[int]], animate = False):
             is_cycle = True
         positions[move].add(guard[-1])
         if animate:
-            frame = pretty_print(board, guard, positions)
-            frames.append(frame)
+            anim += pretty_print(board, guard, positions)
     if animate:
-        animate_frames(frames, 0.001)
+        anim(0.01)
     return is_cycle
 
 def inner(oij, iboard, fn=check_cycle, *args, **kwargs):
@@ -209,9 +194,7 @@ def part2(board, mp=True, visualize=False):
         from tqdm.contrib.concurrent import process_map
 
         return sum(process_map(inner, obstacles, cycle([board]), chunksize=5, leave=False))
-    if visualize:
-        print([inner(o, board, animate=True) for o in obstacles])
-    return sum(inner(o, board) for o in obstacles)
+    return sum(inner(o, board, animate=bool(visualize)) for o in obstacles)
 
-# print(part2(parse_input("test"), False))
+# part2(parse_input("test"), False, True)
 print(part2(parse_input("input")))

@@ -1,4 +1,4 @@
-from helpers import get_path, get_lines, animate_frames
+from helpers import get_path, get_lines, Animation
 
 def parse_input(type : str):
     map_lines, move_lines = [], []
@@ -245,7 +245,7 @@ def animate(type : str, enlarge : bool=False, **kwargs):
     state = Map(state)
     if enlarge:
         state.enlarge()
-    animate_frames((str(state.move(move)) for move in moves), **kwargs)
+    Animation(str(state.move(move)) for move in moves)(**kwargs)
     
 def part1(type : str):
     state, moves = parse_input(type)

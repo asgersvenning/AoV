@@ -1,8 +1,8 @@
 import os
 from inspect import stack
 from time import sleep
+from typing import Iterator
 
-from rich import print as pprint
 from rich.console import Console
 from rich.live import Live
 
@@ -18,17 +18,16 @@ def get_lines(path : str):
 def get_input_matrix(path : str, cls : type=int):
     return [list(map(cls, line)) for line in get_lines(path)]
 
-def animate_frames(frames, speed=0.05):
+def animate_frames(frames, speed=0.05, **kwargs):
     console = Console()  # Create a Console object
-    with Live("", console=console, refresh_per_second=1/speed) as live:
+    with Live("", console=console, refresh_per_second=1/speed, **kwargs) as live:
         for frame in frames:
             live.update(frame)  # Update the displayed frame
             sleep(speed)
-    print()
     
 class Animation:
-    def __init__(self, frames : list | None=None):
-        self.frames : list[str] = frames or []
+    def __init__(self, frames : list[str] | Iterator[str] | None=None):
+        self.frames = list(frames or [])
     
     def __add__(self, other : str):
         self.frames.append(other)
@@ -46,6 +45,6 @@ class Animation:
     def __getitem__(self, i):
         return self.frames[i]
     
-    def __call__(self, speed : float=0.05):
+    def __call__(self, speed : float=0.05, transient : bool=True, **kwargs):
         if len(self) > 0:
-            animate_frames(self.frames, speed)
+            animate_frames(self.frames, speed, transient=transient, **kwargs)
