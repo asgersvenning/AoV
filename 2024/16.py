@@ -1,5 +1,6 @@
 import numpy as np
 from tqdm import tqdm
+import bisect
 
 from helpers import Animation, get_lines, get_path
 
@@ -23,14 +24,15 @@ def directions():
         yield (dx, dy)
 
 class State:
-    def __init__(self, i : int, j : int, total : int, last_direction : tuple[int, int]):
+    def __init__(self, i : int, j : int, total : int, last_direction : tuple[int, int], turning_cost : int = 1000):
         self.i, self.j, self.total, self.last_direction = i, j, total, last_direction
+        self.turning_cost = turning_cost
         
     def move(self, direction : tuple[int, int]):
         i, j, total = self.i + direction[0], self.j + direction[1], self.total + 1
         if direction != self.last_direction:
-            total += 1000
-        return State(i, j, total, direction)
+            total += self.turning_cost
+        return State(i, j, total, direction, self.turning_cost)
     
     def neighbours(self):
         return (self.move(direction) for direction in directions())
@@ -77,9 +79,6 @@ def argmin(iterable):
 
 def order(iterable):
     return [i for i, _ in sorted(enumerate(iterable), key=lambda x : x[1])]
-
-import bisect
-
 
 class PriorityQueue:
     def __init__(self, iterable=None):
@@ -132,6 +131,9 @@ class PriorityQueue:
     
     def history(self):
         return self._history
+    
+def in_bounds(i : int, j : int, arr : np.ndarray):
+    return 0 <= i < arr.shape[0] and 0 <= j < arr.shape[1]
 
 def update(maze : np.ndarray, queue : PriorityQueue):
     _, nxt = queue.pop()
@@ -139,7 +141,7 @@ def update(maze : np.ndarray, queue : PriorityQueue):
         return maze, queue
     cost = nxt.total
     maze[*nxt.ij] = cost
-    queue += [neighbor for neighbor in nxt.neighbours() if maze[*neighbor.ij] != 0 and maze[*neighbor.ij] <= cost]
+    queue += [neighbor for neighbor in nxt.neighbours() if in_bounds(*neighbor.ij, maze) and maze[*neighbor.ij] != 0 and maze[*neighbor.ij] <= cost]
     return maze, queue
      
 def render_history(maze : np.ndarray, history : list[State], start : tuple[int, int], end : tuple[int, int]):
@@ -186,10 +188,6 @@ def part1(type : str, animate : bool=False, verbose : bool=False):
         elif verbose:
             Animation([last_frame])(0)
     return best_path[0].total
-
-# part1("test", True)
-# part1("test1", True)
-print(part1("input"))
 
 def all_best_paths(history : list[State], start : tuple[int, int], verbose : bool=False):
     paths = [backtrace(history, start)]
@@ -242,6 +240,11 @@ def part2(type : str, animate : bool=False, verbose : bool=False):
     
     return len(visited_tiles)
 
-# part2("test", True)
-# part2("test1", True)
-print(part2("input"))
+if __name__ == "__main__":
+    # part1("test", True)
+    # part1("test1", True)
+    print(part1("input"))
+
+    # part2("test", True)
+    # part2("test1", True)
+    print(part2("input"))

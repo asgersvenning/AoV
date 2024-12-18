@@ -1,3 +1,4 @@
+import importlib.util as impu
 import os
 from inspect import stack
 from time import sleep
@@ -6,6 +7,20 @@ from typing import Iterator
 from rich.console import Console
 from rich.live import Live
 
+import os
+import importlib.util as impu
+
+def from_import(name : str, objects : list[str]):
+    path = os.path.join(os.path.dirname(__file__), f"{name}.py")
+    if not os.path.isfile(path):
+        raise ModuleNotFoundError("Unknown module:", name)
+    spec = impu.spec_from_file_location(name, path)
+    if spec is None or spec.loader is None:
+        raise ImportError("Unknown error while attempting to load:", name)
+    module = impu.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    caller_globals = stack()[1].frame.f_globals
+    caller_globals.update({obj : getattr(module, obj) for obj in objects})
 
 def get_path(type : str="test"):
     dir, file = os.path.split(stack()[1].filename)
@@ -20,7 +35,7 @@ def get_input_matrix(path : str, cls : type=int):
 
 def animate_frames(frames, speed=0.05, **kwargs):
     console = Console()  # Create a Console object
-    with Live("", console=console, refresh_per_second=1/speed, **kwargs) as live:
+    with Live("", console=console, refresh_per_second=max(144, 1/speed) if speed != 0 else 4, **kwargs) as live:
         for frame in frames:
             live.update(frame)  # Update the displayed frame
             sleep(speed)
