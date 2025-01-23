@@ -6,9 +6,13 @@ from typing import Iterator
 
 from rich.console import Console
 from rich.live import Live
+from rich import print as pprint
 
 import os
 import importlib.util as impu
+
+SYMBOLS = list("■●▲◆★")
+SQUARE, CIRCLE, TRIANGLE, DIAMOND, STAR = SYMBOLS
 
 def from_import(name : str, objects : list[str]):
     path = os.path.join(os.path.dirname(__file__), f"{name}.py")
