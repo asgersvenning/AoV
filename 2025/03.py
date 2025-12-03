@@ -28,23 +28,19 @@ input = parse_input(get_lines(get_path("input")))
 
 # Part 1
 def argmax(x : list[int]):
-    if len(x) == 0:
-        raise RuntimeError("?", x)
     i, m = 0, x[0]
     for j, v in enumerate(x[1:]):
         if v > m:
-            m = v
-            i = j + 1
+            m, i = v, j + 1
     return i
     
 def max_voltage(bank : list[int], n : int=2, visualize=False):
     ls = [-1]
     for i in range(n):
         ls.append(argmax(bank[(ls[-1]+1):((i-n+1) or len(bank))]) + ls[-1] + 1)
-    ls = ls[1:]
     if visualize:
-        visualize_selection(bank, ls)
-    return int("".join(map(str, map(bank.__getitem__, ls))))
+        visualize_selection(bank, ls[1:])
+    return int("".join(map(str, map(bank.__getitem__, ls[1:]))))
 
 def part1(banks : list[list[int]]):
     return sum(map(max_voltage, banks))
