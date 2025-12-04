@@ -8,8 +8,7 @@ import colorama
 BLACK, BLUE, RED, YELLOW, RESET = colorama.Fore.BLACK, colorama.Fore.BLUE, colorama.Fore.RED, colorama.Fore.YELLOW, colorama.Fore.RESET
 
 def color(o, c):
-    return str(o)
-    # return f'{c}{o}{RESET}'
+    return f'{c}{o}{RESET}'
 
 def element(c : str):
     match c:
@@ -64,16 +63,16 @@ def part1(area : Area):
 print("Part 1:", part1(Area(input))) # = 1409
 
 # Part 2
-# from helpers import Animation
+from helpers import Animation
 
 def part2(area : Area):
     start = len(area)
-    # anim = Animation()
+    anim = Animation()
     while part1(area) > 0:
-        # anim += str(area)
+        anim += str(area)
         area.data[area.data == -1] = 0
-    # anim(0.1, transient=False)
+    anim(0.1, transient=False)
     end = len(area)
     return start - end
 
-print("Part 2:", part2(Area(input))) # = 8366
+print("Part 2:", part2(Area(list(zip(*input))))) # = 8366

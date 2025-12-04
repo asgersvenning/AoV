@@ -7,6 +7,7 @@ from typing import Iterator
 from rich.console import Console
 from rich.live import Live
 from rich import print as pprint
+from rich.text import Text
 
 import os
 import importlib.util as impu
@@ -38,7 +39,8 @@ def get_input_matrix(path : str, cls : type=int):
     return [list(map(cls, line)) for line in get_lines(path)]
 
 def animate_frames(frames, speed=0.05, **kwargs):
-    console = Console()  # Create a Console object
+    console = Console(highlight=False)  # Create a Console object
+    frames = [Text.from_ansi(frame) for frame in frames] # Preprocess frames
     with Live("", console=console, refresh_per_second=max(144, 1/speed) if speed != 0 else 4, **kwargs) as live:
         for frame in frames:
             live.update(frame)  # Update the displayed frame
