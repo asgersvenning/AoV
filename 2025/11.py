@@ -1,3 +1,1 @@
-C, P, K, E, T, I1, I2 = {l[:3]:l[5:].split() for l in open("2025/inputs/11.input")}, ("D", "dac","fft"), {}, 1e-19, "out", "you", ("svr", "D")
-print("Part 1:", (p1 := lambda x : sum(n == T or p1(n) for n in C[x]))(I1)) # = 571
-print("Part 2:", int((p2 := lambda x : C.get(x) or C.setdefault(x, sum(n == T and int(x[1:] == P) + E or p2((n, *(n not in P and x[1:] or sorted([*x[1:], n])))) for n in C[x[0]])))(I2))) # = 511378159390560
+(C := {l[:3]:l[5:].split() for l in open("2025/inputs/11.input")}, P := ("D", "dac","fft"), K := {}, E := 1e-19, T := "out", I1 := "you", I2 := ("svr", "D")) and print("Part 1:", (p1 := lambda x : sum(n == T or p1(n) for n in C[x]))(I1)) or print("Part 2:", int((p2 := lambda x : C.get(x) or C.setdefault(x, sum(n == T and int(x[1:] == P) + E or p2((n, *(n not in P and x[1:] or sorted([*x[1:], n])))) for n in C[x[0]])))(I2))) # = 571, 511378159390560
