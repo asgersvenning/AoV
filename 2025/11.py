@@ -1,24 +1,3 @@
-from helpers import get_lines, get_path
-from functools import lru_cache
-
-def parse_input(input : list[str]):
-    parse_one = lambda x : (x[:3], tuple([x[(5+i*4):(5+(i+1)*4-1)] for i in range((len(x) - 4)//4)]))
-    return dict(map(parse_one, input))
-
-input = parse_input(get_lines(get_path("input")))
-
-# Part 1
-def part1(connections : dict[str, tuple[str, ...]], start : str="you"):
-    return sum(1 if nxt == "out" else part1(connections, nxt) for nxt in connections[start])
-
-print("Part 1:", part1(input)) # = 571
-
-# Part 2
-def part2(connections : dict[str, tuple[str, ...]]):
-    PROBLEMS = ("dac", "fft")
-    @lru_cache(None, True)
-    def inner(start : str, state : tuple):
-        return sum(state == PROBLEMS if nxt == "out" else inner(nxt, state if not nxt in PROBLEMS else tuple(sorted((*state, nxt)))) for nxt in connections[start])
-    return inner("svr", tuple())
-
-print("Part 2:", part2(input)) # = 511378159390560
+C, P, K, E, T, I1, I2 = {l[:3]:l[5:].split() for l in open("2025/inputs/11.input")}, ("D", "dac","fft"), {}, 1e-19, "out", "you", ("svr", "D")
+print("Part 1:", (p1 := lambda x : sum(n == T or p1(n) for n in C[x]))(I1)) # = 571
+print("Part 2:", int((p2 := lambda x : C.get(x) or C.setdefault(x, sum(n == T and int(x[1:] == P) + E or p2((n, *(n not in P and x[1:] or sorted([*x[1:], n])))) for n in C[x[0]])))(I2))) # = 511378159390560
